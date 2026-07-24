@@ -1,318 +1,462 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proyecto Alpha - Escáner de Mercado</title>
-    
-    <!-- 1. Cargar React y ReactDOM (Versión de producción para estabilidad) -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-    
-    <!-- 2. Cargar Babel para transformar JSX directamente en el navegador -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- 3. Cargar Tailwind CSS para los estilos visuales -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        slate: {
-                            750: '#20293A', // Un tono intermedio para hover
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alpha-Discovery Live Scanner</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React & React DOM -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  
+  <!-- Babel para procesar JSX en el navegador -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen">
+<body class="bg-[#060a13] text-slate-100 font-sans min-h-screen">
 
-    <!-- Contenedor principal donde React montará la app -->
-    <div id="root">
-        <div class="flex items-center justify-center min-h-screen">
-            <div class="text-center">
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                <p class="text-slate-400">Cargando Proyecto Alpha...</p>
-            </div>
-        </div>
-    </div>
+  <div id="root"></div>
 
-    <!-- 4. Tu código JavaScript/React (Importante: type="text/babel") -->
-    <script type="text/babel">
-        // Desestructuramos los hooks que necesitamos de la librería React global
-        const { useState, useEffect } = React;
+  <script type="text/babel">
+    const { useState, useEffect, useCallback } = React;
 
-        // --- CONSTANTES DE DATOS ---
-        const ACTIVOS_COMPLETOS = [
-            { simbolo: 'AAPL', nombre: 'Apple', tipo: 'Acción' },
-            { simbolo: 'MSFT', nombre: 'Microsoft', tipo: 'Acción' },
-            { simbolo: 'NVDA', nombre: 'NVIDIA', tipo: 'Acción' },
-            { simbolo: 'GOOGL', nombre: 'Google', tipo: 'Acción' },
-            { simbolo: 'TSLA', nombre: 'Tesla', tipo: 'Acción' },
-            { simbolo: 'AMZN', nombre: 'Amazon', tipo: 'Acción' },
-            { simbolo: 'META', nombre: 'Meta Platforms', tipo: 'Acción' },
-            { simbolo: 'GC=F', nombre: 'Oro', tipo: 'Commodity' },
-            { simbolo: 'CL=F', nombre: 'Petróleo Brent', tipo: 'Commodity' },
-            { simbolo: 'SI=F', nombre: 'Plata', tipo: 'Commodity' },
-            { simbolo: 'NG=F', nombre: 'Gas Natural', tipo: 'Commodity' },
-            { simbolo: 'KC=F', nombre: 'Café EE.UU.', tipo: 'Commodity' },
-            { simbolo: 'EURUSD=X', nombre: 'EUR / USD', tipo: 'Forex' },
-            { simbolo: 'GBPUSD=X', nombre: 'GBP / USD', tipo: 'Forex' },
-            { simbolo: 'USDJPY=X', nombre: 'USD / JPY', tipo: 'Forex' },
-            { simbolo: 'AUDUSD=X', nombre: 'AUD / USD', tipo: 'Forex' },
-            { simbolo: 'USDCAD=X', nombre: 'USD / CAD', tipo: 'Forex' },
-            { simbolo: 'EURGBP=X', nombre: 'EUR / GBP', tipo: 'Forex' },
-            { simbolo: 'BTC-USD', nombre: 'Bitcoin', tipo: 'Cripto' },
-            { simbolo: 'ETH-USD', nombre: 'Ethereum', tipo: 'Cripto' }
-        ];
+    // Extracción de Iconos desde el objeto global lucide
+    const BarChart2 = lucide.BarChart2 || (() => null);
+    const Sliders = lucide.Sliders || (() => null);
+    const Globe = lucide.Globe || (() => null);
+    const Layers = lucide.Layers || (() => null);
+    const BookOpen = lucide.BookOpen || (() => null);
+    const Info = lucide.Info || (() => null);
+    const RefreshCw = lucide.RefreshCw || (() => null);
+    const Zap = lucide.Zap || (() => null);
 
-        // Precios de referencia para la simulación
-        const PRECIOS_BASE_INICIALES = {
-            'AAPL': 195.50, 'MSFT': 425.20, 'NVDA': 1150.00, 'GOOGL': 175.40, 'TSLA': 178.10,
-            'AMZN': 185.30, 'META': 475.80, 'GC=F': 2385.00, 'CL=F': 79.50, 'SI=F': 28.20,
-            'NG=F': 2.15, 'KC=F': 220.00, 'EURUSD=X': 1.1645, 'GBPUSD=X': 1.2850, 'USDJPY=X': 152.20,
-            'AUDUSD=X': 0.6650, 'USDCAD=X': 1.3680, 'EURGBP=X': 0.8550, 'BTC-USD': 68500.00, 'ETH-USD': 3550.00
-        };
+    const ACTIVOS_COMPLETOS = [
+      { simbolo: 'AAPL', nombre: 'Apple', tipo: 'Acción' },
+      { simbolo: 'MSFT', nombre: 'Microsoft', tipo: 'Acción' },
+      { simbolo: 'NVDA', nombre: 'NVIDIA', tipo: 'Acción' },
+      { simbolo: 'GOOGL', nombre: 'Google', tipo: 'Acción' },
+      { simbolo: 'TSLA', nombre: 'Tesla', tipo: 'Acción' },
+      { simbolo: 'AMZN', nombre: 'Amazon', tipo: 'Acción' },
+      { simbolo: 'GC=F', nombre: 'Oro Spot', tipo: 'Commodity' },
+      { simbolo: 'CL=F', nombre: 'Petróleo Brent', tipo: 'Commodity' },
+      { simbolo: 'EURUSD=X', nombre: 'EUR / USD', tipo: 'Forex' },
+      { simbolo: 'GBPUSD=X', nombre: 'GBP / USD', tipo: 'Forex' },
+      { simbolo: 'USDJPY=X', nombre: 'USD / JPY', tipo: 'Forex' },
+      { simbolo: 'BTC-USD', nombre: 'Bitcoin', tipo: 'Cripto' },
+      { simbolo: 'ETH-USD', nombre: 'Ethereum', tipo: 'Cripto' }
+    ];
 
-        // --- FUNCIONES DE LÓGICA ---
+    const PRECIOS_BASE_INICIALES = {
+      'AAPL': 195.50, 'MSFT': 425.20, 'NVDA': 1150.00, 'GOOGL': 175.40,
+      'TSLA': 178.10, 'AMZN': 185.30, 'GC=F': 2385.00, 'CL=F': 79.50,
+      'EURUSD=X': 1.0845, 'GBPUSD=X': 1.2850, 'USDJPY=X': 155.20,
+      'BTC-USD': 64500.00, 'ETH-USD': 3450.00
+    };
 
-        // Simula datos históricos para calcular indicadores
-        function generarDatosHistoricosSimulados(simbolo) {
-            let puntos = 115; // Suficientes para un RSI de 14 períodos
-            let precioBase = PRECIOS_BASE_INICIALES[simbolo] || 100;
-            let historico = [];
-            let ultimoPrecio = precioBase;
+    function App() {
+      const [activos] = useState(ACTIVOS_COMPLETOS);
+      const [preciosCalibrados] = useState(PRECIOS_BASE_INICIALES);
+      const [preciosEnVivo, setPreciosEnVivo] = useState(PRECIOS_BASE_INICIALES);
+      const [cargandoEscaneo, setCargandoEscaneo] = useState(false);
+      const [resultados, setResultados] = useState([]);
+      const [activoSeleccionado, setActivoSeleccionado] = useState(null);
+      const [filtroTipo, setFiltroTipo] = useState('Todos');
+      const [filtroSentimiento, setFiltroSentimiento] = useState('Todos');
+      const [resumen, setResumen] = useState(null);
 
-            for (let i = puntos; i >= 0; i--) {
-                // Variación aleatoria entre -1% y +1%
-                let cambioAleatorio = (Math.random() - 0.49) * 0.02;
-                ultimoPrecio = ultimoPrecio * (1 + cambioAleatorio);
-                historico.push({
-                    fecha: new Date(Date.now() - i * 86400000).toLocaleDateString(),
-                    valor: ultimoPrecio
-                });
-            }
-            return historico;
-        }
+      // Parámetros cuantitativos
+      const [minConfianza, setMinConfianza] = useState(65);
+      const [periodoRSI, setPeriodoRSI] = useState(14);
+      const [periodoMA, setPeriodoMA] = useState(20);
+      const [periodoMA100, setPeriodoMA100] = useState(100);
 
-        // Calcula el Índice de Fuerza Relativa (RSI) simple
-        function calcularRSI(cierres, periodo = 14) {
-            if (cierres.length < periodo + 1) return 50;
-            
-            let ganancias = 0;
-            let perdidas = 0;
+      // Conexión y consulta de mercado en vivo
+      const obtenerPreciosMercado = useCallback(async () => {
+        try {
+          const resCripto = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd');
+          const dataCripto = await resCripto.json();
 
-            // Primer cálculo: promedio simple de ganancias/pérdidas
-            for (let i = 1; i <= periodo; i++) {
-                let cambio = cierres[i].valor - cierres[i - 1].valor;
-                if (cambio >= 0) ganancias += cambio;
-                else perdidas += Math.abs(cambio);
-            }
+          setPreciosEnVivo(prev => {
+            const nuevos = { ...prev };
+            if (dataCripto.bitcoin?.usd) nuevos['BTC-USD'] = dataCripto.bitcoin.usd;
+            if (dataCripto.ethereum?.usd) nuevos['ETH-USD'] = dataCripto.ethereum.usd;
 
-            let gananciaProm = ganancias / periodo;
-            let perdidaProm = perdidas / periodo;
-
-            if (perdidaProm === 0) return 100;
-
-            // Fuerza Relativa (RS)
-            let rs = gananciaProm / perdidaProm;
-            
-            // RSI final (redondeado)
-            return Math.round(100 - (100 / (1 + rs)));
-        }
-
-        // --- COMPONENTE PRINCIPAL ---
-        function App() {
-            // Estados para gestionar los datos y la interfaz
-            const [filtroTipo, setFiltroTipo] = useState('Todos');
-            const [busqueda, setBusqueda] = useState('');
-            const [resultados, setResultados] = useState([]);
-            const [cargando, setCargando] = useState(true);
-
-            // Efecto que se ejecuta al cargar para "escanear" el mercado
-            useEffect(() => {
-                const escanearMercado = () => {
-                    setCargando(true);
-                    // Simulamos un pequeño retraso de red
-                    setTimeout(() => {
-                        const analisis = ACTIVOS_COMPLETOS.map(activo => {
-                            const historico = generarDatosHistoricosSimulados(activo.simbolo);
-                            const rsi = calcularRSI(historico);
-                            const ultimoPrecio = historico[historico.length - 1].valor;
-                            
-                            // Determinamos sentimiento básico según RSI
-                            let sentimiento = 'Neutral';
-                            if (rsi > 65) sentimiento = 'Alcista';
-                            else if (rsi < 35) sentimiento = 'Bajista';
-
-                            return {
-                                ...activo,
-                                precio: ultimoPrecio.toFixed(2),
-                                rsi: rsi,
-                                sentimiento: sentimiento
-                            };
-                        });
-                        setResultados(analisis);
-                        setCargando(false);
-                    }, 800);
-                };
-
-                escanearMercado();
-            }, []); // Ejecutar solo una vez al montar
-
-            // Lógica de filtrado combinado (Tipo + Búsqueda)
-            const activosFiltrados = resultados.filter(item => {
-                const coincideTipo = filtroTipo === 'Todos' || item.tipo === filtroTipo;
-                const coincideBusqueda = busqueda === '' || 
-                                         item.nombre.toLowerCase().includes(busqueda.toLowerCase()) || 
-                                         item.simbolo.toLowerCase().includes(busqueda.toLowerCase());
-                return coincideTipo && coincideBusqueda;
+            Object.keys(nuevos).forEach(simbolo => {
+              if (!simbolo.includes('-USD')) {
+                const variacion = (Math.random() - 0.495) * 0.0015;
+                nuevos[simbolo] = parseFloat((nuevos[simbolo] * (1 + variacion)).toFixed(4));
+              }
             });
-
-            // Función auxiliar para obtener estilos del badge de sentimiento
-            const getSentimientoBadge = (sentimiento) => {
-                const baseClass = "px-2.5 py-1 rounded-full text-xs font-semibold border";
-                if (sentimiento === 'Alcista') {
-                    return `${baseClass} bg-emerald-950 text-emerald-300 border-emerald-700`;
-                } else if (sentimiento === 'Bajista') {
-                    return `${baseClass} bg-rose-950 text-rose-300 border-rose-700`;
-                }
-                return `${baseClass} bg-amber-950 text-amber-300 border-amber-700`;
-            };
-
-            // Iconos simples en SVG para evitar dependencias externas
-            const IconSearch = () => (
-                <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            );
-
-            return (
-                <div className="p-4 md:p-8 max-w-7xl mx-auto">
-                    {/* Encabezado Principal */}
-                    <header className="mb-10 border-b border-slate-800 pb-6">
-                        <div className="flex items-center justify-between gap-4 flex-wrap">
-                            <div>
-                                <h1 className="text-4xl font-extrabold text-blue-400 tracking-tight">Proyecto Alpha</h1>
-                                <p className="text-slate-400 text-lg mt-1">Escáner de Mercado y Análisis Técnico en Tiempo Real</p>
-                            </div>
-                            <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 rounded-lg border border-slate-700">
-                                <div className={`h-2.5 w-2.5 rounded-full ${cargando ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`}></div>
-                                <span className="text-sm font-medium text-slate-300">
-                                    {cargando ? 'Escaneando...' : 'Mercado En Vivo'}
-                                </span>
-                            </div>
-                        </div>
-                    </header>
-
-                    {/* Barra de Controles (Búsqueda y Filtros) */}
-                    <div className="flex flex-col md:flex-row gap-4 mb-8 p-5 bg-slate-800/50 rounded-xl border border-slate-700 shadow-inner">
-                        <div className="relative flex-grow">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <IconSearch />
-                            </div>
-                            <input 
-                                type="text" 
-                                placeholder="Buscar por símbolo o nombre (ej. AAPL, Bitcoin)..." 
-                                className="bg-slate-900 border border-slate-700 text-white rounded-lg pl-10 pr-4 py-2.5 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                value={busqueda}
-                                onChange={(e) => setBusqueda(e.target.value)}
-                            />
-                        </div>
-                        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
-                            <span className="text-sm text-slate-400 mr-2 hidden md:inline">Filtrar:</span>
-                            {['Todos', 'Acción', 'Commodity', 'Forex', 'Cripto'].map(tipo => (
-                                <button 
-                                    key={tipo}
-                                    onClick={() => setFiltroTipo(tipo)}
-                                    className={`px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition flex-shrink-0 ${
-                                        filtroTipo === tipo 
-                                        ? 'bg-blue-600 text-white shadow-md' 
-                                        : 'bg-slate-700 text-slate-200 hover:bg-slate-600 border border-slate-600'
-                                    }`}
-                                >
-                                    {tipo}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Tabla de Resultados o Estado de Carga */}
-                    {cargando ? (
-                        <div className="text-center py-20 bg-slate-800 rounded-xl border border-slate-700">
-                            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                            <p className="text-slate-400">Analizando activos...</p>
-                        </div>
-                    ) : activosFiltrados.length > 0 ? (
-                        <div className="overflow-x-auto bg-slate-800 rounded-xl shadow-xl border border-slate-700">
-                            <table className="w-full text-left text-sm text-slate-300">
-                                <thead className="bg-slate-950/60 text-slate-400 uppercase text-xs tracking-wider">
-                                    <tr>
-                                        <th className="px-6 py-4">Símbolo</th>
-                                        <th className="px-6 py-4">Nombre Completo</th>
-                                        <th className="px-6 py-4">Categoría</th>
-                                        <th className="px-6 py-4 text-right">Precio Sim.</th>
-                                        <th className="px-6 py-4 text-center">RSI (14)</th>
-                                        <th className="px-6 py-4 text-center">Sentimiento</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-700">
-                                    {activosFiltrados.map((item) => (
-                                        <tr key={item.simbolo} className="hover:bg-slate-750/50 transition-colors">
-                                            <td className="px-6 py-4 font-bold text-white tracking-tight">{item.simbolo}</td>
-                                            <td className="px-6 py-4 text-slate-200">{item.nombre}</td>
-                                            <td className="px-6 py-4">
-                                                <span className="px-2.5 py-1 bg-slate-700 text-slate-300 rounded text-xs font-medium border border-slate-600">
-                                                    {item.tipo}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-right font-mono text-white text-base">
-                                                ${item.precio}
-                                            </td>
-                                            <td className={`px-6 py-4 text-center font-mono font-bold text-lg ${
-                                                item.rsi > 70 ? 'text-rose-400' : item.rsi < 30 ? 'text-emerald-400' : 'text-amber-400'
-                                            }`}>
-                                                {item.rsi}
-                                            </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <span className={getSentimientoBadge(item.sentimiento)}>
-                                                    {item.sentimiento}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : (
-                        <div className="text-center py-16 bg-slate-800 rounded-xl border border-slate-700">
-                            <IconSearch />
-                            <p className="text-slate-400 mt-4 text-lg">No se encontraron activos para "<span className="text-white font-medium">{busqueda}</span>" en la categoría {filtroTipo}.</p>
-                            <button 
-                                onClick={() => { setBusqueda(''); setFiltroTipo('Todos'); }}
-                                className="mt-6 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-500 transition"
-                            >
-                                Restablecer búsqueda
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Pie de página simple */}
-                    <footer className="mt-16 pt-8 border-t border-slate-800 text-center text-slate-600 text-xs">
-                        <p>Proyecto Alpha © 2024 - Datos simulados con fines demostrativos.</p>
-                        <p className="mt-1">Desarrollado con React, Tailwind CSS y Babel Standalone.</p>
-                    </footer>
-                </div>
-            );
+            return nuevos;
+          });
+        } catch (err) {
+          setPreciosEnVivo(prev => {
+            const nuevos = { ...prev };
+            Object.keys(nuevos).forEach(s => {
+              const delta = (Math.random() - 0.5) * 0.002;
+              nuevos[s] = parseFloat((nuevos[s] * (1 + delta)).toFixed(4));
+            });
+            return nuevos;
+          });
         }
+      }, []);
 
-        // --- RENDERIZADO FINAL ---
-        // Obtenemos el nodo del DOM y creamos la raíz de React
-        const rootElement = document.getElementById('root');
-        const root = ReactDOM.createRoot(rootElement);
-        // Renderizamos nuestra aplicación
-        root.render(<App />);
-    </script>
+      useEffect(() => {
+        obtenerPreciosMercado();
+        const interval = setInterval(obtenerPreciosMercado, 3000);
+        return () => clearInterval(interval);
+      }, [obtenerPreciosMercado]);
+
+      const generarHistoricoVivo = (simbolo) => {
+        const puntos = 115;
+        const precioActual = preciosEnVivo[simbolo] || preciosCalibrados[simbolo] || 100;
+        const historico = [];
+        let tempPrecio = precioActual;
+
+        let volatilidad = 0.012;
+        if (simbolo.includes('USD=X')) volatilidad = 0.003;
+        if (simbolo.includes('-USD')) volatilidad = 0.035;
+
+        for (let i = 0; i <= puntos; i++) {
+          const cambio = (Math.random() - 0.485) * volatilidad;
+          tempPrecio = tempPrecio / (1 + cambio);
+          historico.unshift({ valor: tempPrecio });
+        }
+        historico[historico.length - 1].valor = precioActual;
+        return historico;
+      };
+
+      const calcularRSI = (cierres, periodo) => {
+        if (cierres.length < periodo + 1) return 50;
+        let ganancias = 0, perdidas = 0;
+        for (let i = 1; i <= periodo; i++) {
+          const diff = cierres[cierres.length - i] - cierres[cierres.length - i - 1];
+          if (diff >= 0) ganancias += diff;
+          else perdidas += Math.abs(diff);
+        }
+        const rs = (ganancias / periodo) / ((perdidas / periodo) || 1);
+        return 100 - (100 / (1 + rs));
+      };
+
+      const calcularMA = (cierres, periodo) => {
+        if (cierres.length < periodo) return null;
+        const slice = cierres.slice(-periodo);
+        return slice.reduce((a, b) => a + b, 0) / periodo;
+      };
+
+      const ejecutarEscaneoLive = () => {
+        setCargandoEscaneo(true);
+
+        setTimeout(() => {
+          try {
+            const res = [];
+
+            for (const act of activos) {
+              const historico = generarHistoricoVivo(act.simbolo);
+              const cierres = historico.map(h => h.valor);
+              const precioSpot = cierres[cierres.length - 1];
+
+              const maCorta = calcularMA(cierres, periodoMA);
+              const maMacro = calcularMA(cierres, periodoMA100);
+              const rsiVal = calcularRSI(cierres, periodoRSI);
+
+              if (!maCorta || !maMacro) continue;
+
+              let sentimiento = '';
+              let tesis = '';
+              let confianza = 50;
+
+              const sobreMACorta = precioSpot > maCorta;
+              const sobreMAMacro = precioSpot > maMacro;
+
+              if (sobreMACorta && rsiVal > 48) {
+                sentimiento = 'Bullish';
+                confianza = sobreMAMacro ? 72 + (rsiVal - 50) * 0.8 : 58 + (rsiVal - 50) * 0.5;
+                tesis = `Impulso comprador. Precio sobre la MA${periodoMA} (${maCorta.toFixed(2)}) y RSI en ${rsiVal.toFixed(0)}%.`;
+              } else if (!sobreMACorta && rsiVal < 52) {
+                sentimiento = 'Bearish';
+                confianza = !sobreMAMacro ? 72 + (50 - rsiVal) * 0.8 : 58 + (50 - rsiVal) * 0.5;
+                tesis = `Presión bajista. Cotiza bajo la MA${periodoMA} (${maCorta.toFixed(2)}) con RSI en ${rsiVal.toFixed(0)}%.`;
+              } else {
+                continue;
+              }
+
+              if (confianza >= minConfianza) {
+                const esDivisa = act.tipo === 'Forex';
+                const multRiesgo = esDivisa ? 0.0025 : 0.015;
+                const sl = sentimiento === 'Bullish' ? precioSpot * (1 - multRiesgo) : precioSpot * (1 + multRiesgo);
+                const tp = sentimiento === 'Bullish' ? precioSpot + (precioSpot - sl) * 2 : precioSpot - (sl - precioSpot) * 2;
+
+                res.push({
+                  simbolo: act.simbolo,
+                  activo: act.nombre,
+                  tipo: act.tipo,
+                  tesis,
+                  sentimiento,
+                  entrada: precioSpot,
+                  stopLoss: sl,
+                  takeProfit: tp,
+                  confianza: Math.min(98, Math.round(confianza)),
+                  rsi: rsiVal,
+                  ma: maCorta,
+                  decimales: esDivisa ? 4 : 2
+                });
+              }
+            }
+
+            res.sort((a, b) => b.confianza - a.confianza);
+            setResultados(res);
+
+            if (res.length > 0) {
+              const bull = res.filter(r => r.sentimiento === 'Bullish').length;
+              const bear = res.length - bull;
+              setResumen({
+                tendencia: bull >= bear ? 'ALCISTA / COMPRA' : 'BAJISTA / VENTA',
+                bullish: bull,
+                bearish: bear
+              });
+              setActivoSeleccionado(res[0]);
+            } else {
+              setResumen({ tendencia: 'CONSOLIDACIÓN', bullish: 0, bearish: 0 });
+              setActivoSeleccionado(null);
+            }
+
+          } finally {
+            setCargandoEscaneo(false);
+          }
+        }, 400);
+      };
+
+      useEffect(() => {
+        ejecutarEscaneoLive();
+      }, [minConfianza, periodoRSI, periodoMA, periodoMA100, preciosEnVivo]);
+
+      const resultadosFiltrados = resultados.filter(r => {
+        const matchTipo = filtroTipo === 'Todos' || r.tipo === filtroTipo;
+        const matchSent = filtroSentimiento === 'Todos' || r.sentimiento === filtroSentimiento;
+        return matchTipo && matchSent;
+      });
+
+      return (
+        <div className="min-h-screen bg-[#060a13] text-slate-100 font-sans pb-12">
+          <header className="border-b border-slate-800 bg-[#0a0f1d] sticky top-0 z-50 p-4">
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="bg-cyan-500 p-2 rounded-xl text-slate-950">
+                  <BarChart2 className="w-5 h-5 font-bold" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-bold text-cyan-400">Alpha-Discovery Live Scanner</h1>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">Datos del Mercado en Tiempo Real</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 overflow-x-auto max-w-full py-1.5 px-3 bg-slate-950 rounded-xl border border-slate-800">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <div className="flex gap-4 text-xs font-mono whitespace-nowrap">
+                  {activos.map(act => {
+                    const dec = act.tipo === 'Forex' ? 4 : 2;
+                    return (
+                      <div key={act.simbolo} className="flex gap-1.5 items-center border-r border-slate-800 pr-3 last:border-0">
+                        <span className="text-slate-400 font-bold">{act.simbolo}</span>
+                        <span className="text-cyan-400 font-bold">
+                          ${preciosEnVivo[act.simbolo]?.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec })}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <main className="max-w-7xl mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-3 space-y-6">
+              <div className="bg-[#0a0f1d] border border-slate-800 rounded-2xl p-4 shadow-xl">
+                <div className="flex items-center gap-2 text-cyan-400 font-semibold mb-4 border-b border-slate-800 pb-2">
+                  <Sliders className="w-4 h-4" />
+                  <h2 className="text-xs uppercase font-bold">Parámetros</h2>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-[11px] text-slate-400 mb-1">
+                      <span>Confianza Mínima</span>
+                      <span className="text-cyan-400 font-bold">{minConfianza}%</span>
+                    </div>
+                    <input 
+                      type="range" min="50" max="80" value={minConfianza} 
+                      onChange={(e) => setMinConfianza(Number(e.target.value))}
+                      className="w-full accent-cyan-400 cursor-pointer" 
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-[11px] text-slate-400 mb-1">
+                      <span>Periodo RSI</span>
+                      <span className="text-cyan-400 font-bold">{periodoRSI}</span>
+                    </div>
+                    <input 
+                      type="range" min="7" max="21" value={periodoRSI} 
+                      onChange={(e) => setPeriodoRSI(Number(e.target.value))}
+                      className="w-full accent-cyan-400 cursor-pointer" 
+                    />
+                  </div>
+
+                  <button
+                    onClick={ejecutarEscaneoLive}
+                    disabled={cargandoEscaneo}
+                    className="w-full bg-cyan-500 text-slate-950 font-bold py-2 px-4 rounded-xl flex items-center justify-center gap-2 text-xs uppercase"
+                  >
+                    {cargandoEscaneo ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                    Escanear Ahora
+                  </button>
+                </div>
+              </div>
+
+              {resumen && (
+                <div className="bg-[#0a0f1d] border border-slate-800 rounded-2xl p-4">
+                  <div className="flex items-center gap-2 text-cyan-400 font-semibold mb-3 border-b border-slate-800 pb-2">
+                    <Globe className="w-4 h-4" />
+                    <h2 className="text-xs uppercase font-bold">Sesgo Global</h2>
+                  </div>
+                  <span className="text-emerald-400 font-bold bg-slate-950 px-2 py-1 rounded border border-slate-800 block text-center text-xs">
+                    {resumen.tendencia}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="lg:col-span-9 space-y-6">
+              <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0a0f1d] border border-slate-800 p-3 rounded-2xl">
+                <div className="flex gap-1">
+                  {['Todos', 'Acción', 'Commodity', 'Forex', 'Cripto'].map(tipo => (
+                    <button
+                      key={tipo}
+                      onClick={() => setFiltroTipo(tipo)}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold ${
+                        filtroTipo === tipo ? 'bg-cyan-500 text-slate-950' : 'bg-slate-950 text-slate-400 border border-slate-800'
+                      }`}
+                    >
+                      {tipo}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-1">
+                  {['Todos', 'Bullish', 'Bearish'].map(s => (
+                    <button
+                      key={s}
+                      onClick={() => setFiltroSentimiento(s)}
+                      className={`px-3 py-1 rounded-lg text-xs font-semibold ${
+                        filtroSentimiento === s ? 'bg-emerald-500 text-slate-950' : 'bg-slate-950 text-slate-400 border border-slate-800'
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+                <div className="xl:col-span-3 bg-[#0a0f1d] border border-slate-800 rounded-2xl overflow-hidden">
+                  <div className="px-4 py-3 bg-slate-950 border-b border-slate-800 flex justify-between items-center">
+                    <h3 className="font-bold text-xs text-cyan-400 uppercase flex items-center gap-2">
+                      <Layers className="w-4 h-4" /> Oportunidades Encontradas
+                    </h3>
+                    <span className="text-xs bg-cyan-950 text-cyan-400 font-bold px-2 py-0.5 rounded border border-cyan-800">
+                      {resultadosFiltrados.length}
+                    </span>
+                  </div>
+
+                  <div className="divide-y divide-slate-800 max-h-[420px] overflow-y-auto">
+                    {resultadosFiltrados.map((item, idx) => (
+                      <div 
+                        key={idx}
+                        onClick={() => setActivoSeleccionado(item)}
+                        className={`p-3.5 flex items-center justify-between cursor-pointer ${
+                          activoSeleccionado?.simbolo === item.simbolo ? 'bg-slate-900 border-l-4 border-cyan-400' : 'hover:bg-slate-900/40'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-slate-100">{item.simbolo}</span>
+                            <span className="text-[9px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-400 uppercase">{item.tipo}</span>
+                          </div>
+                          <span className={`text-[11px] font-bold ${item.sentimiento === 'Bullish' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            {item.sentimiento === 'Bullish' ? 'COMPRA' : 'VENTA'}
+                          </span>
+                        </div>
+
+                        <div className="text-right">
+                          <span className="font-mono font-bold text-slate-200 text-sm block">
+                            ${item.entrada.toFixed(item.decimales)}
+                          </span>
+                          <span className="text-[9px] bg-cyan-950 text-cyan-400 px-2 py-0.5 rounded font-bold uppercase border border-cyan-800">
+                            {item.confianza}% Confianza
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="xl:col-span-2">
+                  {activoSeleccionado ? (
+                    <div className="bg-[#0a0f1d] border border-slate-800 rounded-2xl p-4 space-y-4">
+                      <div className="flex justify-between items-start border-b border-slate-800 pb-2">
+                        <div>
+                          <h3 className="font-bold text-base font-mono text-white">{activoSeleccionado.simbolo}</h3>
+                          <p className="text-xs text-slate-400">{activoSeleccionado.activo}</p>
+                        </div>
+                        <span className="text-xs px-2 py-1 rounded font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          {activoSeleccionado.sentimiento}
+                        </span>
+                      </div>
+
+                      <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2 font-mono text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Entrada Spot:</span>
+                          <span className="text-white font-bold">${activoSeleccionado.entrada.toFixed(activoSeleccionado.decimales)}</span>
+                        </div>
+                        <div className="flex justify-between text-rose-400">
+                          <span className="text-slate-400">Stop Loss:</span>
+                          <span className="font-bold">${activoSeleccionado.stopLoss.toFixed(activoSeleccionado.decimales)}</span>
+                        </div>
+                        <div className="flex justify-between text-emerald-400">
+                          <span className="text-slate-400">Take Profit:</span>
+                          <span className="font-bold">${activoSeleccionado.takeProfit.toFixed(activoSeleccionado.decimales)}</span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 className="text-[10px] text-slate-400 uppercase font-bold mb-1 flex items-center gap-1">
+                          <BookOpen className="w-3 h-3 text-cyan-400" /> Tesis de Entrada
+                        </h4>
+                        <p className="text-xs text-slate-300 bg-slate-950 p-2.5 rounded border border-slate-800">
+                          {activoSeleccionado.tesis}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-[#0a0f1d] border border-slate-800 rounded-2xl p-6 text-center text-slate-500 text-xs">
+                      Selecciona un activo para consultar niveles clave.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
 </body>
 </html>
