@@ -3,75 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proyecto Alpha</title>
-
-    <!-- 1. Cargar React y Babel desde CDN -->
+    <title>Proyecto Alpha - Escáner de Mercado</title>
+    <!-- React & React DOM -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- Babel para transformar JSX en el navegador -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- 2. Cargar Tailwind CSS para los estilos -->
+    <!-- Tailwind CSS para diseño -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 text-gray-900">
+<body class="bg-slate-900 text-slate-100 min-h-screen">
 
-    <!-- Aquí se renderizará tu app de React -->
     <div id="root"></div>
 
-    <!-- 3. Tu código de React (debe llevar type="text/babel") -->
-<script type="text/babel">
-    const { useState, useEffect } = React;
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-    // 1. TUS CONSTANTES
-    const ACTIVOS_COMPLETOS = [
-        { simbolo: 'AAPL', nombre: 'Apple', tipo: 'Acción' },
-        { simbolo: 'MSFT', nombre: 'Microsoft', tipo: 'Acción' },
-        { simbolo: 'NVDA', nombre: 'NVIDIA', tipo: 'Acción' },
-        { simbolo: 'GOOGL', nombre: 'Google', tipo: 'Acción' },
-        { simbolo: 'TSLA', nombre: 'Tesla', tipo: 'Acción' },
-        { simbolo: 'AMZN', nombre: 'Amazon', tipo: 'Acción' },
-        { simbolo: 'META', nombre: 'Meta Platforms', tipo: 'Acción' },
-        { simbolo: 'GC=F', nombre: 'Oro', tipo: 'Commodity' },
-        { simbolo: 'CL=F', nombre: 'Petróleo Brent', tipo: 'Commodity' },
-        { simbolo: 'SI=F', nombre: 'Plata', tipo: 'Commodity' },
-        { simbolo: 'NG=F', nombre: 'Gas Natural', tipo: 'Commodity' },
-        { simbolo: 'KC=F', nombre: 'Café EE.UU.', tipo: 'Commodity' },
-        { simbolo: 'EURUSD=X', nombre: 'EUR / USD', tipo: 'Forex' },
-        { simbolo: 'GBPUSD=X', nombre: 'GBP / USD', tipo: 'Forex' },
-        { simbolo: 'USDJPY=X', nombre: 'USD / JPY', tipo: 'Forex' },
-        { simbolo: 'AUDUSD=X', nombre: 'AUD / USD', tipo: 'Forex' },
-        { simbolo: 'USDCAD=X', nombre: 'USD / CAD', tipo: 'Forex' },
-        { simbolo: 'EURGBP=X', nombre: 'EUR / GBP', tipo: 'Forex' },
-        { simbolo: 'BTC-USD', nombre: 'Bitcoin', tipo: 'Cripto' },
-        { simbolo: 'ETH-USD', nombre: 'Ethereum', tipo: 'Cripto' }
-    ];
+        const ACTIVOS_COMPLETOS = [
+            { simbolo: 'AAPL', nombre: 'Apple', tipo: 'Acción' },
+            { simbolo: 'MSFT', nombre: 'Microsoft', tipo: 'Acción' },
+            { simbolo: 'NVDA', nombre: 'NVIDIA', tipo: 'Acción' },
+            { simbolo: 'GOOGL', nombre: 'Google', tipo: 'Acción' },
+            { simbolo: 'TSLA', nombre: 'Tesla', tipo: 'Acción' },
+            { simbolo: 'AMZN', nombre: 'Amazon', tipo: 'Acción' },
+            { simbolo: 'META', nombre: 'Meta Platforms', tipo: 'Acción' },
+            { simbolo: 'GC=F', nombre: 'Oro', tipo: 'Commodity' },
+            { simbolo: 'CL=F', nombre: 'Petróleo Brent', tipo: 'Commodity' },
+            { simbolo: 'SI=F', nombre: 'Plata', tipo: 'Commodity' },
+            { simbolo: 'NG=F', nombre: 'Gas Natural', tipo: 'Commodity' },
+            { simbolo: 'KC=F', nombre: 'Café EE.UU.', tipo: 'Commodity' },
+            { simbolo: 'EURUSD=X', nombre: 'EUR / USD', tipo: 'Forex' },
+            { simbolo: 'GBPUSD=X', nombre: 'GBP / USD', tipo: 'Forex' },
+            { simbolo: 'USDJPY=X', nombre: 'USD / JPY', tipo: 'Forex' },
+            { simbolo: 'AUDUSD=X', nombre: 'AUD / USD', tipo: 'Forex' },
+            { simbolo: 'USDCAD=X', nombre: 'USD / CAD', tipo: 'Forex' },
+            { simbolo: 'EURGBP=X', nombre: 'EUR / GBP', tipo: 'Forex' },
+            { simbolo: 'BTC-USD', nombre: 'Bitcoin', tipo: 'Cripto' },
+            { simbolo: 'ETH-USD', nombre: 'Ethereum', tipo: 'Cripto' }
+        ];
 
-    const PRECIOS_BASE_INICIALES = {
-        'AAPL': 195.50, 'MSFT': 425.20, 'NVDA': 1150.00, 'GOOGL': 175.40, 'TSLA': 178.10, 
-        'AMZN': 185.30, 'META': 475.80, 'GC=F': 2385.00, 'CL=F': 79.50, 'SI=F': 28.20, 
-        'NG=F': 2.15, 'KC=F': 220.00, 'EURUSD=X': 1.1645, 'GBPUSD=X': 1.2850, 'USDJPY=X': 152.20, 
-        'AUDUSD=X': 0.6650, 'USDCAD=X': 1.3680, 'EURGBP=X': 0.8550, 'BTC-USD': 68500.00, 'ETH-USD': 3550.00
-    };
+        const PRECIOS_BASE_INICIALES = {
+            'AAPL': 195.50, 'MSFT': 425.20, 'NVDA': 1150.00, 'GOOGL': 175.40, 'TSLA': 178.10,
+            'AMZN': 185.30, 'META': 475.80, 'GC=F': 2385.00, 'CL=F': 79.50, 'SI=F': 28.20,
+            'NG=F': 2.15, 'KC=F': 220.00, 'EURUSD=X': 1.1645, 'GBPUSD=X': 1.2850, 'USDJPY=X': 152.20,
+            'AUDUSD=X': 0.6650, 'USDCAD=X': 1.3680, 'EURGBP=X': 0.8550, 'BTC-USD': 68500.00, 'ETH-USD': 3550.00
+        };
 
-    // 2. TU FUNCIÓN APP COMPLETA
-    function App() {
-        // Pega AQUÍ todas las funciones de ayuda (ej. generarDatosHistoricosSimulados, calcularRSI, etc.)
-        // Y dentro del "return ( ... )" el diseño HTML/JSX completo de tu panel.
+        function generarDatosHistoricosSimulados(simbolo) {
+            let puntos = 115;
+            let precioBase = PRECIOS_BASE_INICIALES[simbolo] || 100;
+            let historico = [];
+            let ultimoPrecio = precioBase;
 
-        return (
-            <div className="min-h-screen bg-slate-900 text-white p-6">
-                <header className="mb-6 border-b border-slate-700 pb-4">
-                    <h1 className="text-3xl font-bold text-blue-400">Proyecto Alpha</h1>
-                    <p className="text-slate-400 text-sm">Escáner de Mercado y Análisis Técnico</p>
-                </header>
-                {/* Aquí va todo tu diseño visual (tablas, botones, listas de activos) */}
-            </div>
-        );
-    }
+            for (let i = puntos; i >= 0; i--) {
+                let cambioAleatorio = (Math.random() - 0.49) * 0.02;
+                ultimoPrecio = ultimoPrecio * (1 + cambioAleatorio);
+                historico.push({
+                    fecha: new Date(Date.now() - i * 86400000).toLocaleDateString(),
+                    valor: ultimoPrecio
+                });
+            }
+            return historico;
+        }
 
-    // 3. RENDERIZADO
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
-</script>
+        function calcularRSI(cierres, periodo = 14) {
+            if (cierres.length < periodo + 1) return 50;
+            let ganancias = 0, perdidas = 0;
+            for (let i = 1; i <= periodo; i++) {
+                let cambio = cierres[i].valor - cierres[i - 1].valor;
+                if (cambio >= 0) ganancias += cambio;
+                else perdidas += Math.abs(cambio);
+            }
+            let gananciaProm = ganancias / periodo;
+            let perdidaProm = perdidas / periodo;
+            if (perdidaProm === 0) return 100;
+            let rs = gananciaProm / perdidaProm;
+            return Math.round(100 - (100 / (1 + rs)));
+        }
+
+        function App() {
+            const [activos] = useState(ACTIVOS_COMPLETOS);
+            const [filtroTipo, setFiltroTipo] = useState('Todos');
+            const [busqueda, setBusqueda] = useState('');
+            const [resultados, setResultados] = useState([]);
+
+            useEffect(() => {
+                const escanearMercado = () => {
+                    const analisis = activos.map(activo => {
+                        const historico = generarDatosHistoricosSimulados(activo.simbolo);
+                        const rsi = calcularRSI(historico);
+                        const ultimoPrecio = historico[historico.length - 1].valor;
+                        
+                        let sentimiento = 'Neutral';
+                        if (rsi > 65) sentimiento = 'Alcista';
+                        else if (rsi < 35) sentimiento = 'Bajista';
+
+                        return {
+                            ...activo,
+                            precio: ultimoPrecio.toFixed(2),
+                            rsi,
+                            sentimiento
+                        };
+                    });
+                    setResultados(analisis);
+                };
+                escanearMercado();
+            }, [activos]);
+
+            const activosFiltrados = resultados.filter(item => {
+                const coincideTipo = filtroTipo === 'Todos' || item.tipo === filtroTipo;
+                const coincideBusqueda = item.nombre.toLowerCase().includes(busqueda.toLowerCase()) || 
+                                         item.simbolo.toLowerCase().includes(busqueda.toLowerCase());
+                return coincideTipo && coincideBusqueda;
+            });
+
+            return (
+                <div className="p-6 max-w-7xl mx-auto">
+                    <!-- Encabezado -->
+                    <header className="mb-8 border-b border-slate-700 pb-4">
+                        <h1 className="text-3xl font-bold text-blue-400">Proyecto Alpha</h1>
+                        <p className="text-slate-400 text-sm">Escáner de Mercado y Análisis Técnico en Tiempo Real</p>
+                    </header>
+
+                    <!-- Filtros y Controles -->
+                    <div className="flex flex-wrap gap-4 mb-6 items-center justify-between">
+                        <input 
+                            type="text" 
+                            placeholder="🔍 Buscar activo..." 
+                            className="bg-slate-800 border border-slate-700 text-white rounded-lg px-4 py-2 w-full md:w-64 focus:outline-none focus:border-blue-500"
+                            value={busqueda}
+                            onChange={(e) => setBusqueda(e.target.value)}
+                        />
+                        <div className="flex gap-2">
+                            {['Todos', 'Acción', 'Commodity', 'Forex', 'Cripto'].map(tipo => (
+                                <button 
+                                    key={tipo}
+                                    onClick={() => setFiltroTipo(tipo)}
+                                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
+                                        filtroTipo === tipo 
+                                        ? 'bg-blue-600 text-white' 
+                                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                                    }`}
+                                >
+                                    {tipo}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Activos -->
+                    <div className="overflow-x-auto bg-slate-800 rounded-lg shadow-lg border border-slate-700">
+                        <table className="w-full text-left text-sm text-slate-300">
+                            <thead className="bg-slate-950 text-slate-400 uppercase text-xs">
+                                <tr>
+                                    <th className="px-6 py-3">Símbolo</th>
+                                    <th className="px-6 py-3">Nombre</th>
+                                    <th className="px-6 py-3">Tipo</th>
+                                    <th className="px-6 py-3">Precio Ref.</th>
+                                    <th className="px-6 py-3">RSI (14)</th>
+                                    <th className="px-6 py-3">Sentimiento</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-700">
+                                {activosFiltrados.map((item) => (
+                                    <tr key={item.simbolo} className="hover:bg-slate-750 transition">
+                                        <td className="px-6 py-4 font-bold text-white">{item.simbolo}</td>
+                                        <td className="px-6 py-4">{item.nombre}</td>
+                                        <td className="px-6 py-4">
+                                            <span className="px-2 py-1 bg-slate-700 rounded text-xs text-slate-300">
+                                                {item.tipo}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 font-mono">${item.precio}</td>
+                                        <td className="px-6 py-4 font-mono">{item.rsi}</td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                                                item.sentimiento === 'Alcista' ? 'bg-emerald-900/60 text-emerald-400 border border-emerald-700' :
+                                                item.sentimiento === 'Bajista' ? 'bg-rose-900/60 text-rose-400 border border-rose-700' :
+                                                'bg-amber-900/60 text-amber-400 border border-amber-700'
+                                            }`}>
+                                                {item.sentimiento}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
