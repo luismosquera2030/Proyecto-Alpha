@@ -107,7 +107,7 @@
 
       useEffect(() => {
         obtenerPreciosMercado();
-        const interval = setInterval(obtenerPreciosMercado, 3000);
+        const interval = setInterval(obtenerPreciosMercado, 3000); // 3 segundos
         return () => clearInterval(interval);
       }, [obtenerPreciosMercado]);
 
